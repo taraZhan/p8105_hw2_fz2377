@@ -1,9 +1,10 @@
 ---
-title: "Simple document"
-output: html_document
+title: "Homework 2"
+author: "Tara Zhan"
+data: 09-26-2023
+output: github_document
 ---
 
-I'm an R Markdown document! 
 
 # Section 1
 
