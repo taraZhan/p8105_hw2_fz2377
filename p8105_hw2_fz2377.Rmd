@@ -5,7 +5,7 @@ data: 09-26-2023
 output: github_document
 ---
 
-```{r, message=FALSE, echo=FALSE}
+```{r echo=FALSE, message=FALSE}
 library(moderndive)
 library(tidyverse)
 library(readxl)
@@ -142,7 +142,7 @@ For available data, the total weight of trash collected by Professor Trash Wheel
 
 # Problem 3
 
-```{r, message=FALSE}
+```{r message=FALSE, include=FALSE}
 # Read CSV files:
 baseline <- 
   read.csv("data_mci/MCI_baseline.csv", skip = 1) |>
