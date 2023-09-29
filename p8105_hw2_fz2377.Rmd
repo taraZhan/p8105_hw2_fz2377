@@ -142,7 +142,7 @@ For available data, the total weight of trash collected by Professor Trash Wheel
 
 # Problem 3
 
-```{r echo=TRUE, message=FALSE}
+```{r warning=FALSE, results=FALSE}
 # Read CSV files:
 baseline <- 
   read.csv("data_mci/MCI_baseline.csv", skip = 1) |>
