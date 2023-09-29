@@ -142,28 +142,24 @@ For available data, the total weight of trash collected by Professor Trash Wheel
 
 # Problem 3
 
-```{r message=FALSE, include=FALSE}
+```{r echo=TRUE, message=FALSE}
 # Read CSV files:
 baseline <- 
   read.csv("data_mci/MCI_baseline.csv", skip = 1) |>
   janitor::clean_names() |>
-  rename("study_id" = "id")
-# Convert sex and APOE4 status to factor 
-  baseline %>%
-    mutate(
+  mutate(
       sex = recode(sex, "1" = "male", "0" = "female"),
       apoe4 = recode(apoe4, "1" = "carrier", "0" = "non-carrier")
-      )
+      ) |>    # Convert sex and APOE4 status to factor 
+  rename("study_id" = "id")
 # delete no MCI at baseline
 baseline$age_at_onset <- 
   replace(baseline$age_at_onset, baseline$age_at_onset == ".", NA)
-cleaned_baseline <- 
-  print(baseline) |>
-  drop_na() 
+cleaned_baseline <- drop_na(print(baseline))
 cleaned_baseline$age_at_onset <- as.numeric(cleaned_baseline$age_at_onset)
 ```
 After importing and reformatting the dataset, the "sex" and "APOE4" variables were converted to meaningful characters, and participants who did not develop MCI were removed from the dataset.
-At the beginning, this study recruited `r nrow(baseline)` participants, and among them only `r nrow(cleaned_baseline)` participants develop MCI. Based on the data from cleaned version, the average baseline age is around `r mean(cleaned_baseline$age_at_onset)` years, and based on the total participants, the proportion of women are carriers is around `r sum(baseline$sex == "female" & baseline$apoe4 == "carrier")/sum(baseline$sex == "female") * 100`% people. 
+At the beginning, this study recruited `r nrow(baseline)` participants, and among them only `r nrow(cleaned_baseline)` participants develop MCI. Based on the data from cleaned version, the average baseline age is around `r mean(cleaned_baseline$age_at_onset)` years, and based on the total participants, the proportion of women are carriers is around `r sum(baseline$sex == "female" & baseline$apoe4 == "carrier") / sum(baseline$sex == "female") * 100` % people. 
 
 ```{r}
 # Read CSV files:
