@@ -5,7 +5,7 @@ data: 09-26-2023
 output: github_document
 ---
 
-```{r}
+```{r, message=FALSE, echo=FALSE}
 library(moderndive)
 library(tidyverse)
 library(readxl)
@@ -16,17 +16,15 @@ library(dplyr)
 
 # Problem 1
 
-Read three CSV files:
-
-```{r}
+```{r, echo=FALSE}
+# Read three CSV files:
 pols <- read.csv("fivethirtyeight_datasets/pols-month.csv")
 snp <- read.csv("fivethirtyeight_datasets/snp.csv")
 unemployment <- read.csv("fivethirtyeight_datasets/unemployment.csv")
 ```
 
-First, clean the data in 'pols-month.csv'.
-
 ```{r}
+# First, clean the data in 'pols-month.csv'.
 pols_cleaned <- pols %>%
   # Separate the `mon` column into `year`, `month`, and `day`
   separate(mon, into = c("year", "month", "day"), sep = "-", convert = TRUE) %>%
@@ -40,9 +38,8 @@ pols_cleaned <- pols %>%
 
 **pols_cleaned/(pols-month.csv)**: This dataset describes the voting rate of presidents from 1947 to 2015. The cleaned version contains variables like 'year', 'month', 'political party of the president' that either Democratic ('dem') or republican ('gop').
 
-Second, clean the data in 'snp.csv'
-
 ```{r}
+# Second, clean the data in 'snp.csv'
 snp_cleaned <- snp %>%
   # Separate the `date` column into `year`, `month`, and `day'
   separate(date, into = c("month", "day", "year"), sep = "/", convert = TRUE) %>%
@@ -56,9 +53,8 @@ snp_cleaned <- snp %>%
 
 **snp_cleaned/(snp.csv)**: This dataset describes the stock market indexes over time. The cleaned version arranged data chronologically by 'year' and 'month', making the dataset easier to read. It also contains 'close' values.
 
-Third, tidy the 'unemployment.csv' then merged with the previous datasets
-
 ```{r}
+# Third, tidy the 'unemployment.csv' then merged with the previous datasets
 unemployment_long <- unemployment %>%
   #convert from wide to long format
   gather(key = "month", value = "unemployment_rate", -Year)
@@ -68,9 +64,8 @@ unemployment_long <- unemployment_long %>%
 
 **unemployment_cleaned/(unemployment.csv)**: This dataset describes unemployment rates in each months from 1948 to 2015. The tidying version convert the dataset from wide to long format, making it easier to merge with other datasets. It also contains 'unemployment rate' values.
 
-Merging 'snp' into 'pols', and merging 'unemployment' into the result.
-
 ```{r}
+# Merging 'snp' into 'pols', and merging 'unemployment' into the result.
 combined_data <- pols_cleaned %>%
   # Merge 'snp' into 'pols'
   left_join(snp_cleaned, by = c("year", "month")) %>%
@@ -80,7 +75,7 @@ combined_data <- pols_cleaned %>%
 
 **combined_data:** 
 This is a combination of three above cleaned version datasets based on the 'year' and 'month'. This combined dataset describes an outlook of political, economic, and unemployment rates from year 1948 to year 2015. This combined_data has 11 columns, 822 rows, and spans from the year 1947 to 2015. Key variables in this dataset include: year, month, gov_gop, sen_gop, rep_gop, gov_dem, sen_dem, rep_dem, president, close, unemployment_rate.  
-```{r, echo=FALSE}
+```{r, echo=FALSE, eval=FALSE}
 print(str(combined_data))
 ncol(combined_data)
 nrow(combined_data)
@@ -91,8 +86,103 @@ paste(names(combined_data), collapse=", ")
 
 # Problem 2
 ```{r}
-trash_wheel <- read_excel("trash_wheel_collection.xlsx")
+# clean Mr. Trash Wheel sheet, and add a new variables
+mr_trash_wheel <- 
+  read_excel("trash_wheel_collection.xlsx", 1, range="A2:N549") |>
+  janitor::clean_names() |>
+  filter(homes_powered!=0.00000) |>
+# based on calculation.
+  mutate(homes_powered = weight_tons * (500/30))
+view(mr_trash_wheel)
 ```
 
+```{r}
+#clean Professor Trash Wheel sheet 
+prof_trash_wheel <- 
+  read_excel("trash_wheel_collection.xlsx", 2, range="A2:M96") |>
+  janitor::clean_names() |>
+  drop_na() |>
+# based on calculation.
+  mutate(homes_powered = weight_tons * (500/30))
+view(prof_trash_wheel)
+```
+
+```{r}
+#clean Gwynnda Trash Wheel sheet 
+gwyn_trash_wheel <- 
+  read_excel("trash_wheel_collection.xlsx", 4, range="A2:K108") |>
+  janitor::clean_names() |>
+  drop_na() |>
+# based on calculation.
+  mutate(homes_powered = weight_tons * (500/30))
+view(gwyn_trash_wheel)
+```
+
+```{r}
+# Add wheel_name
+mr_trash_wheel <- mr_trash_wheel %>%
+  mutate(wheel_name = "Mr. Trash Wheel")
+prof_trash_wheel <- prof_trash_wheel %>%
+  mutate(wheel_name = "Professor Trash Wheel")
+gwyn_trash_wheel <- gwyn_trash_wheel %>%
+  mutate(wheel_name = "Gwynnda Trash Wheel")
+# Convert year to numeric
+mr_trash_wheel$year <- as.numeric(mr_trash_wheel$year)
+prof_trash_wheel$year <- as.numeric(prof_trash_wheel$year)
+gwyn_trash_wheel$year <- as.numeric(gwyn_trash_wheel$year)
+
+#combine all datasets
+combined_trash_wheel <- bind_rows(mr_trash_wheel, prof_trash_wheel, gwyn_trash_wheel)
+# View the combined dataset
+view(combined_trash_wheel)
+```
+
+The "combined_trash_wheel" dataset is a combination of data derived from Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda Trash Wheel. This combination includes a total of `r nrow(combined_trash_wheel)` observations, and calculate the number of homes powered. It is computed using the formula provided, where each ton of trash is equated to 500 kilowatts of electricity.  
+For available data, the total weight of trash collected by Professor Trash Wheel is `r sum(prof_trash_wheel$weight_tons)` tons. The total number of cigarette butts collected by Gwynnda in July of 2021 is `r sum(gwyn_trash_wheel$cigarette_butts[gwyn_trash_wheel$year == 2021 & gwyn_trash_wheel$month == "July"])` cigarette butts.
 
 # Problem 3
+
+```{r, message=FALSE}
+# Read CSV files:
+baseline <- 
+  read.csv("data_mci/MCI_baseline.csv", skip = 1) |>
+  janitor::clean_names() |>
+  rename("study_id" = "id")
+# Convert sex and APOE4 status to factor 
+  baseline %>%
+    mutate(
+      sex = recode(sex, "1" = "male", "0" = "female"),
+      apoe4 = recode(apoe4, "1" = "carrier", "0" = "non-carrier")
+      )
+# delete no MCI at baseline
+baseline$age_at_onset <- 
+  replace(baseline$age_at_onset, baseline$age_at_onset == ".", NA)
+cleaned_baseline <- 
+  print(baseline) |>
+  drop_na() 
+cleaned_baseline$age_at_onset <- as.numeric(cleaned_baseline$age_at_onset)
+```
+After importing and reformatting the dataset, the "sex" and "APOE4" variables were converted to meaningful characters, and participants who did not develop MCI were removed from the dataset.
+At the beginning, this study recruited `r nrow(baseline)` participants, and among them only `r nrow(cleaned_baseline)` participants develop MCI. Based on the data from cleaned version, the average baseline age is around `r mean(cleaned_baseline$age_at_onset)` years, and based on the total participants, the proportion of women are carriers is around `r sum(baseline$sex == "female" & baseline$apoe4 == "carrier")/sum(baseline$sex == "female") * 100`% people. 
+
+```{r}
+# Read CSV files:
+amyloid <- 
+  read.csv("data_mci/mci_amyloid.csv", skip = 1) |>
+  janitor::clean_names() |>
+  drop_na()
+# convert to long format
+amyloid_long <- amyloid %>%
+  pivot_longer(baseline:time_8, 
+               names_to = "time", 
+               values_to = "value")
+```
+After importing and reformatting the dataset, all "NA" values were deleted, and the dataset was convert into long format.
+There are `r length(setdiff(baseline$id, amyloid_long$study_id))` participants appear in only the baseline dataset, and `r length(setdiff(amyloid_long$study_id, baseline$id))` participants appear in only the amyloid dataset.
+```{r}
+# Merge datasets
+combined_mci <- merge(baseline, amyloid_long, by = "study_id" )
+# Exporting the combined_mci to a CSV file
+write.csv(combined_data, "data_mci/combined_dataset.csv", row.names = FALSE)
+```
+The "combined_mci" dataset is a combination of data derived from baseline and amyloid_long. This combination includes both demographic details and observed biomarker values, easier to analysis Alzheimer’s disease.
