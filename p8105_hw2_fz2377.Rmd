@@ -73,8 +73,8 @@ combined_data <- pols_cleaned %>%
   left_join(unemployment_long, by = c("year", "month"))
 ```
 
-**combined_data:** 
-This is a combination of three above cleaned version datasets based on the 'year' and 'month'. This combined dataset describes an outlook of political, economic, and unemployment rates from year 1948 to year 2015. This combined_data has 11 columns, 822 rows, and spans from the year 1947 to 2015. Key variables in this dataset include: year, month, gov_gop, sen_gop, rep_gop, gov_dem, sen_dem, rep_dem, president, close, unemployment_rate.  
+**combined_data:** This is a combination of three above cleaned version datasets based on the 'year' and 'month'. This combined dataset describes an outlook of political, economic, and unemployment rates from year 1948 to year 2015. This combined_data has 11 columns, 822 rows, and spans from the year 1947 to 2015. Key variables in this dataset include: year, month, gov_gop, sen_gop, rep_gop, gov_dem, sen_dem, rep_dem, president, close, unemployment_rate.
+
 ```{r, echo=FALSE, eval=FALSE}
 print(str(combined_data))
 ncol(combined_data)
@@ -85,37 +85,34 @@ paste(names(combined_data), collapse=", ")
 ```
 
 # Problem 2
+
 ```{r}
-# clean Mr. Trash Wheel sheet, and add a new variables
+# clean Mr. Trash Wheel sheet
 mr_trash_wheel <- 
   read_excel("trash_wheel_collection.xlsx", 1, range="A2:N549") |>
   janitor::clean_names() |>
-  filter(homes_powered!=0.00000) |>
-# based on calculation.
+  mutate(
+    date = substr(date, nchar(date) - 1, nchar(date))
+  )|>
   mutate(homes_powered = weight_tons * (500/30))
-view(mr_trash_wheel)
-```
 
-```{r}
 #clean Professor Trash Wheel sheet 
 prof_trash_wheel <- 
   read_excel("trash_wheel_collection.xlsx", 2, range="A2:M96") |>
   janitor::clean_names() |>
-  drop_na() |>
-# based on calculation.
+  mutate(
+    date = substr(date, nchar(date) - 1, nchar(date))
+  )|>
   mutate(homes_powered = weight_tons * (500/30))
-view(prof_trash_wheel)
-```
 
-```{r}
 #clean Gwynnda Trash Wheel sheet 
 gwyn_trash_wheel <- 
   read_excel("trash_wheel_collection.xlsx", 4, range="A2:K108") |>
   janitor::clean_names() |>
-  drop_na() |>
-# based on calculation.
+  mutate(
+    date = substr(date, nchar(date) - 1, nchar(date))
+  )|>
   mutate(homes_powered = weight_tons * (500/30))
-view(gwyn_trash_wheel)
 ```
 
 ```{r}
@@ -133,11 +130,9 @@ gwyn_trash_wheel$year <- as.numeric(gwyn_trash_wheel$year)
 
 #combine all datasets
 combined_trash_wheel <- bind_rows(mr_trash_wheel, prof_trash_wheel, gwyn_trash_wheel)
-# View the combined dataset
-view(combined_trash_wheel)
 ```
 
-The "combined_trash_wheel" dataset is a combination of data derived from Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda Trash Wheel. This combination includes a total of `r nrow(combined_trash_wheel)` observations, and calculate the number of homes powered. It is computed using the formula provided, where each ton of trash is equated to 500 kilowatts of electricity.  
+The "combined_trash_wheel" dataset is a combination of data derived from Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda Trash Wheel, which includes a total of `r nrow(combined_trash_wheel)` observations. Only Gwynnda Trash Wheel dataset counts for `plastic_bags`, but lack of data for `glass_bottles`, `grocery_bags`, `chip_bags`, `sports_balls`. There are no data of `plastic_bags` and `sports_balls` in Professor Trash Wheel dataset. Only Mr. Trash Wheel dataset has data for `sports_balls`.\
 For available data, the total weight of trash collected by Professor Trash Wheel is `r sum(prof_trash_wheel$weight_tons)` tons. The total number of cigarette butts collected by Gwynnda in July of 2021 is `r sum(gwyn_trash_wheel$cigarette_butts[gwyn_trash_wheel$year == 2021 & gwyn_trash_wheel$month == "July"])` cigarette butts.
 
 # Problem 3
@@ -152,14 +147,19 @@ baseline <-
       apoe4 = recode(apoe4, "1" = "carrier", "0" = "non-carrier")
       ) |>    # Convert sex and APOE4 status to factor 
   rename("study_id" = "id")
-# delete no MCI at baseline
-baseline$age_at_onset <- 
-  replace(baseline$age_at_onset, baseline$age_at_onset == ".", NA)
-cleaned_baseline <- drop_na(print(baseline))
-cleaned_baseline$age_at_onset <- as.numeric(cleaned_baseline$age_at_onset)
+
+#developed MCI
+baseline_ <- baseline |>
+  subset(current_age < age_at_onset | age_at_onset == ".")
+
+#NO NA dataset
+baseline_na <- baseline_ |>
+  mutate(age_at_onset = ifelse(age_at_onset == ".", NA, age_at_onset))
+cleaned_baseline <- baseline_na |>
+  drop_na()
 ```
-After importing and reformatting the dataset, the "sex" and "APOE4" variables were converted to meaningful characters, and participants who did not develop MCI were removed from the dataset.
-At the beginning, this study recruited `r nrow(baseline)` participants, and among them only `r nrow(cleaned_baseline)` participants develop MCI. Based on the data from cleaned version, the average baseline age is around `r mean(cleaned_baseline$age_at_onset)` years, and based on the total participants, the proportion of women are carriers is around `r sum(baseline$sex == "female" & baseline$apoe4 == "carrier") / sum(baseline$sex == "female") * 100` % people. 
+
+After importing and reformatting the dataset, the "sex" and "APOE4" variables were converted to meaningful characters, and participants who did not develop MCI were removed from the dataset. At the beginning, this study recruited `r nrow(baseline)` participants, and among them only `r nrow(baseline_)` participants met the requirements. Based on the data from cleaned version, there are `r nrow(cleaned_baseline)` participants developed MCI eventually, the average baseline age is around `r mean(baseline_$current_age)` years, and based on the total participants, the proportion of women are carriers is around `r sum(baseline_$sex == "female" & baseline_$apoe4 == "carrier") / sum(baseline_$sex == "female") * 100` % people.
 
 ```{r}
 # Read CSV files:
@@ -173,12 +173,14 @@ amyloid_long <- amyloid %>%
                names_to = "time", 
                values_to = "value")
 ```
-After importing and reformatting the dataset, all "NA" values were deleted, and the dataset was convert into long format.
-There are `r length(setdiff(baseline$id, amyloid_long$study_id))` participants appear in only the baseline dataset, and `r length(setdiff(amyloid_long$study_id, baseline$id))` participants appear in only the amyloid dataset.
+
+After importing and reformatting the dataset, all "NA" values were deleted, and the dataset was convert into long format. There are `r length(setdiff(baseline$id, amyloid_long$study_id))` participants appear in only the baseline dataset, and `r length(setdiff(amyloid_long$study_id, baseline$id))` participants appear in only the amyloid dataset.
+
 ```{r}
 # Merge datasets
 combined_mci <- merge(baseline, amyloid_long, by = "study_id" )
 # Exporting the combined_mci to a CSV file
 write.csv(combined_data, "data_mci/combined_dataset.csv", row.names = FALSE)
 ```
-The "combined_mci" dataset is a combination of data derived from baseline and amyloid_long. This combination includes both demographic details and observed biomarker values, easier to analysis Alzheimer’s disease.
+
+The "combined_mci" dataset is a combination of data derived from baseline and amyloid_long. This combination includes both demographic details and observed biomarker values, easier to analysis Alzheimer's disease.
