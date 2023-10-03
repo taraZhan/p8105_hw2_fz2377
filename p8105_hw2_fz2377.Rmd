@@ -89,7 +89,7 @@ paste(names(combined_data), collapse=", ")
 ```{r}
 # clean Mr. Trash Wheel sheet
 mr_trash_wheel <- 
-  read_excel("trash_wheel_collection.xlsx", 1, range="A2:N549") |>
+  read_excel("new_trash_wheel.xlsx", 1, range="A2:N586") |>
   janitor::clean_names() |>
   mutate(
     date = substr(date, nchar(date) - 1, nchar(date))
@@ -98,7 +98,7 @@ mr_trash_wheel <-
 
 #clean Professor Trash Wheel sheet 
 prof_trash_wheel <- 
-  read_excel("trash_wheel_collection.xlsx", 2, range="A2:M96") |>
+  read_excel("new_trash_wheel.xlsx", 2, range="A2:M108") |>
   janitor::clean_names() |>
   mutate(
     date = substr(date, nchar(date) - 1, nchar(date))
@@ -107,7 +107,7 @@ prof_trash_wheel <-
 
 #clean Gwynnda Trash Wheel sheet 
 gwyn_trash_wheel <- 
-  read_excel("trash_wheel_collection.xlsx", 4, range="A2:K108") |>
+  read_excel("new_trash_wheel.xlsx", 4, range="A2:L157") |>
   janitor::clean_names() |>
   mutate(
     date = substr(date, nchar(date) - 1, nchar(date))
@@ -132,7 +132,7 @@ gwyn_trash_wheel$year <- as.numeric(gwyn_trash_wheel$year)
 combined_trash_wheel <- bind_rows(mr_trash_wheel, prof_trash_wheel, gwyn_trash_wheel)
 ```
 
-The "combined_trash_wheel" dataset is a combination of data derived from Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda Trash Wheel, which includes a total of `r nrow(combined_trash_wheel)` observations. Only Gwynnda Trash Wheel dataset counts for `plastic_bags`, but lack of data for `glass_bottles`, `grocery_bags`, `chip_bags`, `sports_balls`. There are no data of `plastic_bags` and `sports_balls` in Professor Trash Wheel dataset. Only Mr. Trash Wheel dataset has data for `sports_balls`.\
+The "combined_trash_wheel" dataset is a combination of data derived from Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda Trash Wheel, which includes a total of `r nrow(combined_trash_wheel)` observations. Only Gwynnda Trash Wheel dataset lack of data for `glass_bottles` and `sports_balls`, some of them missing data for `wrappers`. There are no data of `sports_balls` in Professor Trash Wheel dataset as well. Only Mr. Trash Wheel dataset has data for `sports_balls`.
 For available data, the total weight of trash collected by Professor Trash Wheel is `r sum(prof_trash_wheel$weight_tons)` tons. The total number of cigarette butts collected by Gwynnda in July of 2021 is `r sum(gwyn_trash_wheel$cigarette_butts[gwyn_trash_wheel$year == 2021 & gwyn_trash_wheel$month == "July"])` cigarette butts.
 
 # Problem 3
