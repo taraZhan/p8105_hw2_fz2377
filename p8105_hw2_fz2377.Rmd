@@ -148,7 +148,7 @@ baseline <-
       ) |>    # Convert sex and APOE4 status to factor 
   rename("study_id" = "id")
 
-#developed MCI
+#people who meet requirements
 baseline_ <- baseline |>
   subset(current_age < age_at_onset | age_at_onset == ".")
 
@@ -156,7 +156,7 @@ baseline_ <- baseline |>
 baseline_na <- baseline_ |>
   mutate(age_at_onset = ifelse(age_at_onset == ".", NA, age_at_onset))
 cleaned_baseline <- baseline_na |>
-  drop_na()
+  drop_na() #developed MCI
 ```
 
 After importing and reformatting the dataset, the "sex" and "APOE4" variables were converted to meaningful characters, and participants who did not develop MCI were removed from the dataset. At the beginning, this study recruited `r nrow(baseline)` participants, and among them only `r nrow(baseline_)` participants met the requirements. Based on the data from cleaned version, there are `r nrow(cleaned_baseline)` participants developed MCI eventually, the average baseline age is around `r mean(baseline_$current_age)` years, and based on the total participants, the proportion of women are carriers is around `r sum(baseline_$sex == "female" & baseline_$apoe4 == "carrier") / sum(baseline_$sex == "female") * 100` % people.
