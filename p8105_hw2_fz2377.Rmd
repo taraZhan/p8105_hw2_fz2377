@@ -166,13 +166,18 @@ After importing and reformatting the dataset, the "sex" and "APOE4" variables we
 amyloid <- 
   read.csv("data_mci/mci_amyloid.csv", skip = 1) |>
   janitor::clean_names()
+#convert from wide to long format
+long_amyloid <- amyloid |>
+  pivot_longer(baseline:time_8, 
+               names_to = "time", 
+               values_to = "value")
 ```
 
 After importing and reformatting the dataset, all "NA" values were kept since this may not affect the final results, and the dataset was convert into long format. There are `r length(setdiff(baseline_$study_id, amyloid$study_id))` participants appear in only the baseline dataset, and `r length(setdiff(amyloid$study_id, baseline_$study_id))` participants appear in only the amyloid dataset.
 
 ```{r}
 # Merge datasets
-combined_mci <- merge(baseline_, amyloid, by = "study_id" )
+combined_mci <- merge(baseline_, long_amyloid, by = "study_id" )
 # Exporting the combined_mci to a CSV file
 write.csv(combined_mci, "data_mci/combined_mci.csv", row.names = FALSE)
 ```
